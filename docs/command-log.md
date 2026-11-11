@@ -49,7 +49,11 @@ To https://github.com/InGentleWave/codyssey-python-linux-git-docker-command-quiz
 ### git checkout
 
 ```bash
-
+<USER>@<HOST>:~/<FOLDER>/codyssey-python-linux-git-docker-commands-quiz$ git checkout -b playQuiz
+Switched to a new branch 'playQuiz'
+<USER>@<HOST>:~/<FOLDER>/codyssey-python-linux-git-docker-commands-quiz$ git status
+On branch playQuiz
+nothing to commit, working tree clean
 ```
 
 ### git clone
