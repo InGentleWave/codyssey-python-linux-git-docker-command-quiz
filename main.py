@@ -1,11 +1,14 @@
 """퀴즈 게임 실행 진입점."""
-# 기본 퀴즈 데이터를 가져옵니다.
-from default_quizzes import get_default_quizzes
+# state.json 저장과 불러오기 함수를 가져옵니다.
+from storage import load_state, save_state
 # Quiz 클래스와 선택지 개수를 가져옵니다.
-from quiz import CHOICE_COUNT
+from quiz import CHOICE_COUNT, Quiz
 # 숫자 입력을 검증하는 함수를 가져옵니다.
 from input_utils import ask_int
+# 문자 입력을 검증하는 함수를 가져옵니다.
+from input_utils import ask_text
 
+# 
 # 메뉴 항목 목록입니다. 순서대로 1번, 2번, ... 이 됩니다.
 MENU_ITEMS = [
     "퀴즈 풀기",
@@ -14,6 +17,7 @@ MENU_ITEMS = [
     "점수 확인",
     "종료",
 ]
+
 # 마지막 항목(종료)의 번호입니다. 항목 개수가 바뀌어도 자동으로 맞춰집니다.
 EXIT_NUMBER = len(MENU_ITEMS)
 
@@ -21,6 +25,7 @@ EXIT_NUMBER = len(MENU_ITEMS)
 def show_menu():
     """메뉴 목록을 출력합니다."""
     print("\n=== 나만의 퀴즈 게임 ===")
+
     # enumerate의 start=1로 메뉴 번호를 1부터 붙여 출력합니다.
     for number, label in enumerate(MENU_ITEMS, start=1):
         print(f"{number}. {label}")
@@ -56,31 +61,60 @@ def play_quiz(quizzes):
     score = round(correct_count / total * 100)
     print(f"\n결과: {total}문제 중 {correct_count}문제 정답 (점수: {score}점)")
 
+def add_quiz(quizzes: list[Quiz]) -> None:
+    """문제, 선택지 4개, 정답 번호를 입력받아 Quiz를 만들고 목록 끝에 추가합니다."""
+    # 빈 문제는 허용하지 않으므로 ask_text로 입력받습니다.
+    question: str = ask_text("문제를 입력하세요: ")
+
+    # 선택지는 CHOICE_COUNT(4)개를 모두 빈 값 없이 입력받습니다.
+    choices: list[str] = []
+    for number in range(1, CHOICE_COUNT + 1):
+        choice: str = ask_text(f"선택지 {number}번: ")
+        choices.append(choice)
+
+    # 정답 번호는 1 ~ CHOICE_COUNT 범위의 정수만 받습니다.
+    answer: int = ask_int("정답 번호를 입력하세요 (1~4): ", 1, CHOICE_COUNT)
+
+    # 전달받은 리스트에 직접 추가하므로 run()의 quizzes에도 반영됩니다.
+    quizzes.append(Quiz(question, choices, answer))
+    print("퀴즈가 추가되었습니다.")
+
 def run():
     """메뉴를 반복 출력하고 선택된 번호를 처리합니다."""
-    # 프로그램 시작 시 기본 퀴즈 목록을 한 번 만듭니다.
-    quizzes = get_default_quizzes()
+    # state.json에서 저장된 데이터를 불러옵니다. 없거나 손상되었으면 기본 데이터를 사용합니다.
+    quizzes, best_score, history = load_state()
+        
+    # 퀴즈가 존재하지 않는 경우를 테스트하기 위한 코드입니다. 실제로는 퀴즈를 가져오므로 주석 처리합니다.
+    # quizzes = []  # 테스트용: 퀴즈가 없는 경우를 확인하려면 이 줄을 주석 해제합니다.
 
-    # 퀴즈가 존재하지 않는 경우를 테스트하기 위한 코드입니다. 실제로는 기본 퀴즈를 가져오므로 주석 처리합니다.
-    quizzes = []  # 테스트용: 퀴즈가 없는 경우를 확인하려면 이 줄을 주석 해제합니다.
-    
-    # 종료를 선택할 때까지 메뉴를 계속 보여줍니다.
-    while True:
-        show_menu()
-        # 1 ~ EXIT_NUMBER 범위의 정수만 받도록 검증합니다.
-        choice = ask_int("메뉴 번호를 입력하세요: ", 1, EXIT_NUMBER)
+    try:
+        # 종료를 선택할 때까지 메뉴를 계속 보여줍니다.
+        while True:
+            show_menu()
+            # 1 ~ EXIT_NUMBER 범위의 정수만 받도록 검증합니다.
+            choice = ask_int("메뉴 번호를 입력하세요: ", 1, EXIT_NUMBER)
 
-        # 종료를 선택하면 반복을 빠져나와 프로그램을 끝냅니다.
-        if choice == EXIT_NUMBER:
-            print("프로그램을 종료합니다.")
-            break
+            # 종료를 선택하면 반복을 빠져나와 프로그램을 끝냅니다.
+            if choice == EXIT_NUMBER:
+                print("프로그램을 종료합니다.")
+                break
 
-        # 1번 메뉴는 퀴즈 풀기를 실행합니다.
-        if choice == 1:
-            play_quiz(quizzes)
-        else:
-            # 2~4번 기능은 설계 8.2의 #6~9에서 구현할 예정이므로 안내 문구만 출력합니다.
-            print("이 메뉴는 아직 구현되지 않았습니다.")
+            # 1번 메뉴는 퀴즈 풀기를 실행합니다.
+            if choice == 1:
+                play_quiz(quizzes)
+
+            # 2번 메뉴는 퀴즈 추가를 실행합니다.
+            elif choice == 2:
+                add_quiz(quizzes)
+                # 퀴즈 추가한 후에는 state.json에 저장합니다. 저장 실패 시 안내만 출력하고 계속 진행합니다.
+                save_state(quizzes, best_score, history)  # 최고 점수와 기록은 기존 값을 전달합니다.
+
+            else:
+                # 2~4번 기능은 설계 8.2의 #6~9에서 구현할 예정이므로 안내 문구만 출력합니다.
+                print("이 메뉴는 아직 구현되지 않았습니다.")
+    finally:
+        # 프로그램 종료 시 state.json에 저장합니다. 저장 실패 시 안내만 출력하고 종료합니다.
+        save_state(quizzes, best_score, history)
 
 
 # 이 파일을 직접 실행했을 때만 아래 코드가 동작합니다 (다른 파일에서 import하면 실행되지 않음).

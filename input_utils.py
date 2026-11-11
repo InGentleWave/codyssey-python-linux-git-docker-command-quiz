@@ -27,3 +27,17 @@ def ask_int(prompt, min_value, max_value):
 
         # 모든 검사를 통과한 값만 반환합니다.
         return value
+
+def ask_text(prompt: str) -> str:
+    """빈 입력이 아닌 텍스트를 받을 때까지 다시 묻고, 앞뒤 공백을 제거해 반환합니다."""
+    while True:
+        # 입력을 받고 앞뒤 공백을 제거합니다.
+        raw: str = input(prompt).strip()
+
+        # 공백만 입력했거나 아무것도 입력하지 않은 경우 다시 입력받습니다.
+        if raw == "":
+            print("입력값이 비어 있습니다. 다시 입력해 주세요.")
+            continue
+
+        # 검사를 통과한 문자열만 반환합니다.
+        return raw
