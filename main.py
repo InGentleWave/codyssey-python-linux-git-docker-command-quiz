@@ -44,6 +44,12 @@ def run():
 if __name__ == "__main__":
     try:
         run()
+    except KeyboardInterrupt:
+        # Ctrl+C 입력 시 안내 후 정상 종료합니다.
+        print("\n입력이 중단되어 프로그램을 종료합니다.")
+    except EOFError:
+        # 입력 스트림이 끝난 경우(예: Ctrl+D) 안내 후 정상 종료합니다.
+        print("\n입력이 종료되어 프로그램을 종료합니다.")
     except Exception as error:
         # 예상하지 못한 오류가 나면 내용을 출력합니다.
         print(f"오류가 발생했습니다: {error}")
