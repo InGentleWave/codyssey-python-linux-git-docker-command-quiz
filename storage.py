@@ -14,7 +14,7 @@ def load_state() -> tuple[list[Quiz], int | None, list[dict]]:
     """state.json에서 (퀴즈 목록, 최고 점수, 기록 목록)을 읽어 반환합니다.
     파일이 없거나 손상되었으면 안내 후 기본 데이터를 반환합니다."""
     # 기본 데이터: 기본 퀴즈, 최고 점수 없음(None), 빈 기록 (설계 5절)
-    default_state: tuple[list[Quiz], int | None, list[dict]] = (get_default_quizzes(), None, [])
+    default_state: tuple[list[Quiz], int | None, list[dict]] = (get_default_quizzes())
 
     # 파일이 없으면 첫 실행으로 보고 기본 데이터를 사용합니다.
     if not STATE_PATH.exists():
@@ -32,7 +32,7 @@ def load_state() -> tuple[list[Quiz], int | None, list[dict]]:
 
         # 각 항목을 Quiz 객체로 복원합니다. 값이 잘못되면 Quiz 생성자가 ValueError를 발생시킵니다.
         quizzes: list[Quiz] = [Quiz.from_dict(item) for item in data["quizzes"]]
-        best_score: int = data["best_score"]
+        best_score: int | None = data["best_score"]
         history: list[dict] = data["history"]
 
         # 최고 점수는 None(미풀이) 또는 0~100 사이의 정수여야 합니다.
