@@ -79,6 +79,23 @@ def add_quiz(quizzes: list[Quiz]) -> None:
     quizzes.append(Quiz(question, choices, answer))
     print("퀴즈가 추가되었습니다.")
 
+def show_quiz_list(quizzes: list[Quiz]) -> None:
+    """저장된 퀴즈를 번호 순서대로 출력하고, 각 퀴즈의 정답 번호도 함께 보여줍니다."""
+    # 퀴즈가 없으면 목록을 보여줄 수 없으므로 안내 후 메뉴로 돌아갑니다 (설계 6절 4번 3항).
+    if len(quizzes) == 0:
+        print("등록된 퀴즈가 없습니다. 퀴즈를 먼저 추가해 주세요.")
+        return
+
+    total: int = len(quizzes)
+
+    # enumerate의 start=1로 목록 번호를 1부터 표시합니다.
+    for index, quiz in enumerate(quizzes, start=1):
+        print(f"\n[{index}/{total}]")
+        # 문제와 선택지를 출력합니다. 기존 Quiz.display()를 그대로 사용합니다.
+        quiz.display()
+        # 목록에서는 정답 번호를 함께 노출합니다.
+        print(f"정답: {quiz.answer}번")
+
 def run():
     """메뉴를 반복 출력하고 선택된 번호를 처리합니다."""
     # state.json에서 저장된 데이터를 불러옵니다. 없거나 손상되었으면 기본 데이터를 사용합니다.
@@ -109,8 +126,11 @@ def run():
                 # 퀴즈 추가한 후에는 state.json에 저장합니다. 저장 실패 시 안내만 출력하고 계속 진행합니다.
                 save_state(quizzes, best_score, history)  # 최고 점수와 기록은 기존 값을 전달합니다.
 
+            elif choice == 3:
+                # 퀴즈 목록을 출력합니다.
+                show_quiz_list(quizzes)
             else:
-                # 2~4번 기능은 설계 8.2의 #6~9에서 구현할 예정이므로 안내 문구만 출력합니다.
+                # 4번 기능은 설계 8.2의 #6~9에서 구현할 예정이므로 안내 문구만 출력합니다.
                 print("이 메뉴는 아직 구현되지 않았습니다.")
     finally:
         # 프로그램 종료 시 state.json에 저장합니다. 저장 실패 시 안내만 출력하고 종료합니다.
