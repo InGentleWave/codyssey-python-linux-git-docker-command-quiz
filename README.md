@@ -1,4 +1,4 @@
-# codyssey-python-linux-commands-quiz
+# 나만의 퀴즈 게임
 
 ## 프로젝트 개요
 
