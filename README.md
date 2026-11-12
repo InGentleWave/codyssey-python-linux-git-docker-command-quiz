@@ -190,3 +190,4 @@ codyssey-python-linux-git-docker-commands-quiz/
 - 점수 = 획득 점수 / 푼 문제 수 x 100을 반올림한 값입니다.
 - 정답은 1점, (미구현)힌트를 사용해 맞힌 문제는 0.5점입니다.
 - 게임 점수가 `best_score`보다 높으면 갱신합니다.
+Git 저장소 복제 실습
