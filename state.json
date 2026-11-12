@@ -1,26 +1,5 @@
 {
-  "quizzes": [
-    {
-      "question": "테스트용 퀴즈(1) 정답 3",
-      "choices": [
-        "X",
-        "X",
-        "O",
-        "X"
-      ],
-      "answer": 3
-    },
-    {
-      "question": "테스트용 퀴즈(2) 정답 1",
-      "choices": [
-        "O",
-        "X",
-        "X",
-        "X"
-      ],
-      "answer": 1
-    }
-  ],
+  "quizzes": [],
   "best_score": 50,
   "history": []
 }
