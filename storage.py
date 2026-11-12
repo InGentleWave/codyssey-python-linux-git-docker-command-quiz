@@ -10,11 +10,11 @@ from quiz import Quiz
 STATE_PATH: Path = Path(__file__).resolve().parent / "state.json"
 
 
-def load_state() -> tuple[list[Quiz], int, list[dict]]:
+def load_state() -> tuple[list[Quiz], int | None, list[dict]]:
     """state.json에서 (퀴즈 목록, 최고 점수, 기록 목록)을 읽어 반환합니다.
     파일이 없거나 손상되었으면 안내 후 기본 데이터를 반환합니다."""
-    # 기본 데이터: 기본 퀴즈, 최고 점수 0, 빈 기록 (설계 5절)
-    default_state: tuple[list[Quiz], int, list[dict]] = (get_default_quizzes(), 0, [])
+    # 기본 데이터: 기본 퀴즈, 최고 점수 없음(None), 빈 기록 (설계 5절)
+    default_state: tuple[list[Quiz], int | None, list[dict]] = (get_default_quizzes(), None, [])
 
     # 파일이 없으면 첫 실행으로 보고 기본 데이터를 사용합니다.
     if not STATE_PATH.exists():
@@ -35,9 +35,16 @@ def load_state() -> tuple[list[Quiz], int, list[dict]]:
         best_score: int = data["best_score"]
         history: list[dict] = data["history"]
 
-        # 최고 점수는 정수, 기록은 리스트여야 합니다.
-        if not isinstance(best_score, int) or not isinstance(history, list):
-            raise ValueError("최고 점수 또는 기록의 형식이 잘못되었습니다.")
+        # 최고 점수는 None(미풀이) 또는 0~100 사이의 정수여야 합니다.
+        # bool은 int의 하위 클래스이므로 isinstance(True, int)가 True가 됩니다. 이를 막기 위해 bool을 따로 제외합니다.
+        if best_score is not None and (
+            isinstance(best_score, bool)
+            or not isinstance(best_score, int)
+            or not 0 <= best_score <= 100
+        ):
+            raise ValueError("최고 점수 값이 잘못되었습니다.")
+        if not isinstance(history, list):
+            raise ValueError("기록의 형식이 잘못되었습니다.")
 
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
         # 읽기 실패, JSON 형식 오류, 키 누락, 값 오류를 모두 같은 방식으로 처리합니다.
@@ -49,7 +56,7 @@ def load_state() -> tuple[list[Quiz], int, list[dict]]:
     return quizzes, best_score, history
 
 
-def save_state(quizzes: list[Quiz], best_score: int, history: list[dict]) -> None:
+def save_state(quizzes: list[Quiz], best_score: int | None, history: list[dict]) -> None:
     """퀴즈 목록, 최고 점수, 기록을 state.json에 UTF-8로 저장합니다."""
     # 설계 5절의 스키마에 맞춰 dict를 만듭니다.
     data: dict = {

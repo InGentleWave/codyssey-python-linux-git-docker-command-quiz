@@ -30,7 +30,7 @@ def show_menu():
     for number, label in enumerate(MENU_ITEMS, start=1):
         print(f"{number}. {label}")
 
-def play_quiz(quizzes):
+def play_quiz(quizzes: list[Quiz]) -> int | None:
     """퀴즈를 원본 순서대로 전부 출제하고 정답 수와 점수를 출력합니다."""
     total = len(quizzes)
 
@@ -58,8 +58,10 @@ def play_quiz(quizzes):
 
     # 설계 5절의 점수 계산식: 획득 점수 합계 / 푼 문제 수 x 100, 반올림하여 정수로 저장
     # 힌트 기능이 없으므로 정답 1점, 오답 0점으로 합계와 정답 수가 같습니다.
-    score = round(correct_count / total * 100)
+        score: int = round(correct_count / total * 100)
     print(f"\n결과: {total}문제 중 {correct_count}문제 정답 (점수: {score}점)")
+    # 획득 점수를 호출한 쪽에 돌려줍니다. run()에서 최고 점수 갱신에 사용합니다.
+    return score
 
 def add_quiz(quizzes: list[Quiz]) -> None:
     """문제, 선택지 4개, 정답 번호를 입력받아 Quiz를 만들고 목록 끝에 추가합니다."""
@@ -96,6 +98,14 @@ def show_quiz_list(quizzes: list[Quiz]) -> None:
         # 목록에서는 정답 번호를 함께 노출합니다.
         print(f"정답: {quiz.answer}번")
 
+def show_best_score(best_score: int | None) -> None:
+    """최고 점수를 출력합니다. 아직 풀지 않았으면 안내 문구를 출력합니다 (설계 6절 4번 4항)."""
+    # None은 한 번도 풀지 않은 상태입니다. 0점은 정상 점수이므로 None과 구분합니다.
+    if best_score is None:
+        print("아직 퀴즈를 푼 기록이 없습니다.")
+        return
+    print(f"최고 점수: {best_score}점")
+
 def run():
     """메뉴를 반복 출력하고 선택된 번호를 처리합니다."""
     # state.json에서 저장된 데이터를 불러옵니다. 없거나 손상되었으면 기본 데이터를 사용합니다.
@@ -118,7 +128,10 @@ def run():
 
             # 1번 메뉴는 퀴즈 풀기를 실행합니다.
             if choice == 1:
-                play_quiz(quizzes)
+                score: int | None = play_quiz(quizzes)
+                if score is not None and (best_score is None or score > best_score):
+                    best_score = score
+                    print("최고 점수를 갱신했습니다.")
 
             # 2번 메뉴는 퀴즈 추가를 실행합니다.
             elif choice == 2:
@@ -129,9 +142,10 @@ def run():
             elif choice == 3:
                 # 퀴즈 목록을 출력합니다.
                 show_quiz_list(quizzes)
-            else:
-                # 4번 기능은 설계 8.2의 #6~9에서 구현할 예정이므로 안내 문구만 출력합니다.
-                print("이 메뉴는 아직 구현되지 않았습니다.")
+            elif choice == 4:
+                # 최고 점수를 출력합니다.
+                show_best_score(best_score)
+                
     finally:
         # 프로그램 종료 시 state.json에 저장합니다. 저장 실패 시 안내만 출력하고 종료합니다.
         save_state(quizzes, best_score, history)

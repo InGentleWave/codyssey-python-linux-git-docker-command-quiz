@@ -1,26 +1,16 @@
 {
   "quizzes": [
     {
-      "question": "테스트용 문제 답 4",
+      "question": "테스트1 정답2",
       "choices": [
-        "오답",
-        "오답",
-        "ㅇㄷ",
-        "정답"
-      ],
-      "answer": 4
-    },
-    {
-      "question": "테스트용 문제(2) 정답2",
-      "choices": [
-        "오답",
-        "정답",
-        "오답",
-        "오답"
+        "X",
+        "O",
+        "X",
+        "X"
       ],
       "answer": 2
     }
   ],
-  "best_score": 0,
+  "best_score": 100,
   "history": []
 }
