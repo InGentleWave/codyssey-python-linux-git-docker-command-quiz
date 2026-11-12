@@ -49,7 +49,7 @@ Python 콘솔 프로그램 1개와 GitHub 저장소 1개입니다. 제출물은 
 - 저장소를 내려받습니다.
 
 ```bash
-git clone https://github.com/InGentleWave/codyssey-python-linux-commands-quiz.git
+git clone https://github.com/InGentleWave/codyssey-python-linux-git-docker-command-quiz.git
 cd codyssey-python-linux-commands-quiz
 ```
 
