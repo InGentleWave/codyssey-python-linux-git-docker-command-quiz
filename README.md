@@ -50,7 +50,7 @@ Python 콘솔 프로그램 1개와 GitHub 저장소 1개입니다. 제출물은 
 
 ```bash
 git clone https://github.com/InGentleWave/codyssey-python-linux-git-docker-command-quiz.git
-cd codyssey-python-linux-commands-quiz
+cd codyssey-python-linux-git-docker-command-quiz
 ```
 
 ### 1. 기본 주제(Git, Docker, Linux 명령어)로 실행
