@@ -24,7 +24,7 @@ def load_state() -> tuple[list[Quiz], int | None, list[dict]]:
     try:
         with STATE_PATH.open("r", encoding="utf-8") as file:
             # JSON 텍스트를 dict로 변환합니다. 형식이 잘못되면 JSONDecodeError가 발생합니다.
-            data = json.load(file)
+            data: dict = json.load(file)
 
         # 최상위 값이 객체(dict)가 아니면 잘못된 데이터입니다.
         if not isinstance(data, dict):
