@@ -3,7 +3,7 @@
 # 퀴즈 객체와 선택지 개수를 가져옵니다.
 from quiz import CHOICE_COUNT, Quiz
 # 숫자 입력과 텍스트 입력을 검증하는 함수를 가져옵니다.
-from input_utils import ask_int, ask_optional_text, ask_text
+from input_utils import ask_int, ask_optional_text, ask_text, ask_yes_no
 # 한 판의 출제와 채점을 담당하는 클래스를 가져옵니다.
 from quiz_session import QuizSession
 # state.json 저장과 불러오기 함수를 가져옵니다.
@@ -14,6 +14,7 @@ MENU_ITEMS: list[str] = [
     "퀴즈 풀기",
     "퀴즈 추가",
     "퀴즈 목록",
+    "퀴즈 삭제",
     "점수 확인",
     "종료",
 ]
@@ -125,6 +126,37 @@ class QuizGame:
             if quiz.has_hint():
                 print(f"힌트: {quiz.hint}")
 
+    def delete_quiz(self) -> None:
+        """문제 목록에서 번호를 골라 확인 후 삭제하고 바로 저장합니다. 0을 입력하면 취소합니다."""
+        total: int = len(self.quizzes)
+        if total == 0:
+            print("등록된 퀴즈가 없습니다. 삭제할 퀴즈가 없습니다.")
+            return
+
+        # 삭제할 문제를 고르기 쉽도록 문제 문장만 짧게 보여 줍니다.
+        print(f"\n등록된 퀴즈 목록 (총 {total}개)")
+        for index, quiz in enumerate(self.quizzes, start=1):
+            print(f"[{index}] {quiz.question}")
+
+        number: int = ask_int(f"삭제할 퀴즈 번호를 입력하세요 (취소: 0, 1~{total}): ", 0, total)
+        if number == 0:
+            print("삭제를 취소했습니다.")
+            return
+
+        # 화면 번호는 1부터, 리스트 인덱스는 0부터이므로 1을 뺍니다.
+        target: Quiz = self.quizzes[number - 1]
+        print()
+        target.display()
+        if not ask_yes_no("이 퀴즈를 삭제할까요? (y/n): "):
+            print("삭제를 취소했습니다.")
+            return
+
+        self.quizzes.pop(number - 1)
+        print("퀴즈를 삭제했습니다.")
+
+        # 삭제 결과를 바로 파일에 반영합니다.
+        self.save()
+
     def show_best_score(self) -> None:
         """최고 점수를 출력합니다. 아직 풀지 않았으면 안내 문구를 출력합니다 (설계 6절 4번 4항)."""
         # None은 한 번도 풀지 않은 상태입니다. 0점은 정상 점수이므로 None과 구분합니다.
@@ -155,8 +187,11 @@ class QuizGame:
                 # 3번 메뉴는 퀴즈 목록을 출력합니다.
                 elif choice == 3:
                     self.show_quiz_list()
-                # 4번 메뉴는 최고 점수를 출력합니다.
+                # 4번 메뉴는 퀴즈를 삭제합니다.
                 elif choice == 4:
+                    self.delete_quiz()
+                # 5번 메뉴는 최고 점수를 출력합니다.
+                elif choice == 5:
                     self.show_best_score()
         finally:
             self.save()
