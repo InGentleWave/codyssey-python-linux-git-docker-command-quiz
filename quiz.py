@@ -7,7 +7,7 @@ CHOICE_COUNT: int = 4
 class Quiz:
     """문제, 선택지 4개, 정답 번호(1~4)를 가진 퀴즈 한 문항."""
 
-    def __init__(self, question : str, choices : list, answer : int) -> None:
+    def __init__(self, question : str, choices : list[str], answer : int) -> None:
         # 선택지 개수가 4개가 아니면 잘못된 데이터이므로 예외를 발생시킵니다.
         if len(choices) != CHOICE_COUNT:
             raise ValueError(f"선택지는 {CHOICE_COUNT}개여야 합니다.")
