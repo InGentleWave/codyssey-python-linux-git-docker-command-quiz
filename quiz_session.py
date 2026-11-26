@@ -1,16 +1,22 @@
 """퀴즈 한 판의 출제와 채점을 담당하는 QuizSession 클래스."""
 
+import random
+
 from input_utils import ask_int
 from quiz import CHOICE_COUNT, Quiz
 
 
 class QuizSession:
-    """한 판에 출제할 퀴즈 목록을 받아 문제를 내고, 정답 수와 점수를 계산합니다.
+    """한 판에 출제할 퀴즈를 고르고 문제를 내며, 정답 수와 점수를 계산합니다.
     게임 전체의 상태(최고 점수, 저장)는 QuizGame이 맡고, 이 클래스는 한 판의 진행만 맡습니다."""
 
-    def __init__(self, quizzes: list[Quiz]) -> None:
-        # 원본 목록이 바뀌지 않도록 복사해서 저장합니다.
-        self.quizzes: list[Quiz] = list(quizzes)
+    def __init__(self, quizzes: list[Quiz], count: int, shuffle: bool) -> None:
+        if shuffle:
+            # random.sample은 원본 리스트를 바꾸지 않고, 무작위로 count개를 뽑은 새 리스트를 반환합니다.
+            self.quizzes: list[Quiz] = random.sample(quizzes, count)
+        else:
+            # 슬라이싱도 새 리스트를 만들므로 원본 순서와 내용이 유지됩니다.
+            self.quizzes = quizzes[:count]
         self.correct_count: int = 0  # 맞힌 문제 수
 
     def ask_question(self, index: int, quiz: Quiz) -> None:

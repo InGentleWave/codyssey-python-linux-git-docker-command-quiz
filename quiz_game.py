@@ -20,6 +20,12 @@ MENU_ITEMS: list[str] = [
 # 마지막 항목(종료)의 번호입니다. 항목 개수가 바뀌어도 자동으로 맞춰집니다.
 EXIT_NUMBER: int = len(MENU_ITEMS)
 
+# 퀴즈 풀기 모드 목록입니다. 각 항목은 (화면에 보일 이름, 문제 순서를 섞을지 여부)입니다.
+PLAY_MODES: list[tuple[str, bool]] = [
+    ("기본 (저장된 순서대로 출제)", False),
+    ("랜덤 (순서를 섞어 출제)", True),
+]
+
 
 class QuizGame:
     """퀴즈 목록, 최고 점수, 기록을 가지고 메뉴 기능을 실행하는 클래스 (설계 4.2절)."""
@@ -46,15 +52,31 @@ class QuizGame:
         for number, label in enumerate(MENU_ITEMS, start=1):
             print(f"{number}. {label}")
 
+    def choose_mode(self) -> tuple[str, bool]:
+        """퀴즈 풀기 모드 목록을 출력하고, 선택한 모드를 반환합니다."""
+        print("\n풀이 모드를 선택하세요.")
+        for number, (label, _) in enumerate(PLAY_MODES, start=1):
+            print(f"{number}. {label}")
+        choice: int = ask_int("모드 번호를 입력하세요: ", 1, len(PLAY_MODES))
+        # 화면 번호는 1부터, 리스트 인덱스는 0부터이므로 1을 뺍니다.
+        return PLAY_MODES[choice - 1]
+
     def play_quiz(self) -> None:
-        """퀴즈 한 판을 QuizSession에 맡겨 진행하고, 결과 점수로 최고 점수를 갱신합니다."""
+        """모드와 문제 수를 입력받아 퀴즈 한 판을 진행하고, 결과 점수로 최고 점수를 갱신합니다."""
+        total: int = len(self.quizzes)
+
         # 퀴즈가 없으면 풀 수 없으므로 안내 후 메뉴로 돌아갑니다.
-        if len(self.quizzes) == 0:
+        if total == 0:
             print("등록된 퀴즈가 없습니다. 퀴즈를 먼저 추가해 주세요.")
             return
 
+        mode_label, shuffle = self.choose_mode()
+        # 0개나 전체 퀴즈 수를 넘는 값은 ask_int가 안내 후 다시 입력받습니다.
+        count: int = ask_int(f"풀 문제 수를 입력하세요 (1~{total}): ", 1, total)
+        print(f"\n[{mode_label}] {count}문제를 시작합니다.")
+
         # 출제와 채점은 QuizSession이 담당합니다.
-        score: int = QuizSession(self.quizzes).run()
+        score: int = QuizSession(self.quizzes, count, shuffle).run()
 
         # 아직 풀지 않았거나(None) 기존 최고 점수보다 높으면 갱신합니다 (설계 6절 4번 1항).
         if self.best_score is None or score > self.best_score:
