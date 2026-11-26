@@ -204,7 +204,7 @@ Windows PowerShell에서는 `python main.py`로 실행합니다.
 | 퀴즈 추가 | [2026-11-12_add_quiz.png](docs/screenshots/2026-11-12_add_quiz.png) |
 | 퀴즈 목록 | [2026-11-12_quiz_list.png](docs/screenshots/2026-11-12_quiz_list.png) |
 | 점수 확인 | [2026-11-12_quiz_best_score.png](docs/screenshots/2026-11-12_quiz_best_score.png) |
-| `git log --oneline --graph` | [2026-11-12_git_log_oneline_graph.png](docs/screenshots/2026-11-12_git_log_oneline_graph.png) |
+| `git log --oneline --graph` | [2026-11-26_git_log_oneline_graph.png](docs/screenshots/2026-11-26_git_log_oneline_graph.png) |
 
 ## 기능 목록
 
