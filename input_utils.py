@@ -1,12 +1,12 @@
 """공통 입력 검증 함수 모음."""
 
 
-def ask_int(prompt, min_value, max_value):
+def ask_int(prompt: str, min_value: int, max_value: int) -> int:
     """정수 입력을 받아 범위 안의 값을 반환합니다. 잘못된 입력은 다시 묻습니다."""
     # 올바른 값을 받을 때까지 반복합니다.
     while True:
         # input()으로 입력을 받고, strip()으로 앞뒤 공백을 제거합니다.
-        raw = input(prompt).strip()
+        raw: str = input(prompt).strip()
 
         # 빈 입력이면 안내 후 다시 입력받습니다.
         if raw == "":
@@ -15,7 +15,7 @@ def ask_int(prompt, min_value, max_value):
 
         # 숫자로 변환할 수 없는 값(예: abc)은 ValueError가 발생하므로 잡아서 처리합니다.
         try:
-            value = int(raw)
+            value: int = int(raw)
         except ValueError:
             print("숫자만 입력해 주세요.")
             continue

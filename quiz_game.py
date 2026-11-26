@@ -4,6 +4,8 @@
 from quiz import CHOICE_COUNT, Quiz
 # 숫자 입력과 텍스트 입력을 검증하는 함수를 가져옵니다.
 from input_utils import ask_int, ask_text
+# 한 판의 출제와 채점을 담당하는 클래스를 가져옵니다.
+from quiz_session import QuizSession
 # state.json 저장과 불러오기 함수를 가져옵니다.
 from storage import load_state, save_state
 
@@ -45,35 +47,14 @@ class QuizGame:
             print(f"{number}. {label}")
 
     def play_quiz(self) -> None:
-        """퀴즈를 원본 순서대로 전부 출제하고, 점수를 계산해 최고 점수를 갱신합니다."""
-        total: int = len(self.quizzes)
-
+        """퀴즈 한 판을 QuizSession에 맡겨 진행하고, 결과 점수로 최고 점수를 갱신합니다."""
         # 퀴즈가 없으면 풀 수 없으므로 안내 후 메뉴로 돌아갑니다.
-        if total == 0:
+        if len(self.quizzes) == 0:
             print("등록된 퀴즈가 없습니다. 퀴즈를 먼저 추가해 주세요.")
             return
 
-        correct_count: int = 0
-
-        # enumerate의 start=1로 문제 번호를 1부터 표시합니다.
-        for index, quiz in enumerate(self.quizzes, start=1):
-            print(f"\n[{index}/{total}]")
-            quiz.display()
-
-            # 1 ~ CHOICE_COUNT 범위의 정수만 받도록 검증합니다.
-            selected: int = ask_int("정답 번호를 입력하세요: ", 1, CHOICE_COUNT)
-
-            # check_answer()는 True 또는 False를 반환합니다.
-            if quiz.check_answer(selected):
-                print("정답입니다.")
-                correct_count += 1
-            else:
-                print(f"오답입니다. 정답은 {quiz.answer}번입니다.")
-
-        # 설계 5절의 점수 계산식: 정답 수 / 푼 문제 수 x 100, 반올림하여 정수로 저장
-        # 힌트 기능이 없으므로 정답 1점, 오답 0점입니다.
-        score: int = round(correct_count / total * 100)
-        print(f"\n결과: {total}문제 중 {correct_count}문제 정답 (점수: {score}점)")
+        # 출제와 채점은 QuizSession이 담당합니다.
+        score: int = QuizSession(self.quizzes).run()
 
         # 아직 풀지 않았거나(None) 기존 최고 점수보다 높으면 갱신합니다 (설계 6절 4번 1항).
         if self.best_score is None or score > self.best_score:
