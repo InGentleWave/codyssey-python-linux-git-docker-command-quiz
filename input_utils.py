@@ -41,3 +41,10 @@ def ask_text(prompt: str) -> str:
 
         # 검사를 통과한 문자열만 반환합니다.
         return raw
+
+
+def ask_optional_text(prompt: str) -> str | None:
+    """선택 항목용 텍스트를 입력받습니다. 빈 입력이면 None을 반환합니다."""
+    raw: str = input(prompt).strip()
+    # 빈 문자열은 '입력하지 않음'으로 보고 None을 반환합니다.
+    return raw if raw != "" else None
