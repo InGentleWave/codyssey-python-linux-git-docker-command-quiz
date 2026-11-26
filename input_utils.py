@@ -43,6 +43,18 @@ def ask_text(prompt: str) -> str:
         return raw
 
 
+def ask_yes_no(prompt: str) -> bool:
+    """y 또는 n을 받을 때까지 다시 묻고, y이면 True, n이면 False를 반환합니다. 대소문자는 구분하지 않습니다."""
+    while True:
+        # lower()로 소문자로 바꿔 Y와 y를 같게 처리합니다.
+        raw: str = input(prompt).strip().lower()
+        if raw == "y":
+            return True
+        if raw == "n":
+            return False
+        print("y 또는 n을 입력해 주세요.")
+
+
 def ask_optional_text(prompt: str) -> str | None:
     """선택 항목용 텍스트를 입력받습니다. 빈 입력이면 None을 반환합니다."""
     raw: str = input(prompt).strip()
