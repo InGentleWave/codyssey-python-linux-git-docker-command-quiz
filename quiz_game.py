@@ -21,6 +21,9 @@ MENU_ITEMS: list[str] = [
 # 마지막 항목(종료)의 번호입니다. 항목 개수가 바뀌어도 자동으로 맞춰집니다.
 EXIT_NUMBER: int = len(MENU_ITEMS)
 
+# 점수 확인 메뉴에서 보여 줄 최근 게임 기록 개수입니다.
+RECENT_HISTORY_COUNT: int = 5
+
 # 퀴즈 풀기 모드 목록입니다. 각 항목은 (화면에 보일 이름, 문제 순서를 섞을지 여부, 힌트 사용 여부)입니다.
 PLAY_MODES: list[tuple[str, bool, bool]] = [
     ("기본 (저장된 순서대로 출제)", False, False),
@@ -42,7 +45,7 @@ class QuizGame:
         
         self.quizzes: list[Quiz] = quizzes        # 퀴즈 목록
         self.best_score: int | None = best_score  # 최고 점수 (None이면 아직 풀지 않음)
-        self.history: list[dict] = history        # 게임 기록 (8.2 #16에서 채워짐)
+        self.history: list[dict] = history        # 게임 기록 (한 판이 끝날 때마다 추가)
 
     def save(self) -> None:
         """현재 퀴즈 목록, 최고 점수, 기록을 state.json에 저장합니다."""
@@ -78,13 +81,18 @@ class QuizGame:
         count: int = ask_int(f"풀 문제 수를 입력하세요 (1~{total}): ", 1, total)
         print(f"\n[{mode_label}] {count}문제를 시작합니다.")
 
-        # 출제와 채점은 QuizSession이 담당합니다.
-        score: int = QuizSession(self.quizzes, count, shuffle, use_hint).run()
+        # 출제와 채점은 QuizSession이 담당하고, 끝나면 이번 게임 기록을 돌려받습니다.
+        record: dict = QuizSession(self.quizzes, count, shuffle, use_hint).run()
+        score: int = record["score"]
+        self.history.append(record)
 
         # 아직 풀지 않았거나(None) 기존 최고 점수보다 높으면 갱신합니다 (설계 6절 4번 1항).
         if self.best_score is None or score > self.best_score:
             self.best_score = score
             print("최고 점수를 갱신했습니다.")
+
+        # 게임 기록과 최고 점수를 바로 파일에 반영합니다.
+        self.save()
 
     def add_quiz(self) -> None:
         """문제, 선택지 4개, 정답 번호를 입력받아 Quiz를 추가하고 바로 저장합니다."""
@@ -158,12 +166,25 @@ class QuizGame:
         self.save()
 
     def show_best_score(self) -> None:
-        """최고 점수를 출력합니다. 아직 풀지 않았으면 안내 문구를 출력합니다 (설계 6절 4번 4항)."""
+        """최고 점수와 최근 게임 기록을 출력합니다. 아직 풀지 않았으면 안내 문구를 출력합니다 (설계 6절 4번 4항)."""
         # None은 한 번도 풀지 않은 상태입니다. 0점은 정상 점수이므로 None과 구분합니다.
         if self.best_score is None:
             print("아직 퀴즈를 푼 기록이 없습니다.")
             return
         print(f"최고 점수: {self.best_score}점")
+
+        if len(self.history) == 0:
+            return
+
+        # 최근 기록부터 보이도록 뒤에서부터 RECENT_HISTORY_COUNT개를 꺼냅니다.
+        recent: list[dict] = self.history[-RECENT_HISTORY_COUNT:][::-1]
+        print(f"\n게임 기록 (총 {len(self.history)}회, 최근 {len(recent)}회)")
+        for record in recent:
+            print(
+                f"- {record['played_at']} | "
+                f"{record['questions_solved']}문제 중 {record['correct_count']}문제 정답 | "
+                f"{record['score']}점 | 힌트 {record['hints_used']}개"
+            )
 
     def run(self) -> None:
         """메뉴를 반복 출력하고 선택된 번호를 처리합니다. 종료 시 항상 저장합니다."""

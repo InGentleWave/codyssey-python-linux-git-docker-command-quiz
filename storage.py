@@ -17,6 +17,35 @@ State = tuple[list[Quiz], int | None, list[dict]]
 LOAD_ERRORS: tuple[type[Exception], ...] = (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError)
 
 
+# history 항목 하나가 가져야 하는 키와 자료형입니다.
+HISTORY_FIELDS: dict[str, type] = {
+    "played_at": str,
+    "questions_solved": int,
+    "correct_count": int,
+    "score": int,
+    "hints_used": int,
+}
+
+
+def is_plain_int(value: object) -> bool:
+    """bool이 아닌 정수이면 True를 반환합니다.
+    bool은 int의 하위 클래스이므로 isinstance(True, int)가 True가 됩니다. 이를 막기 위해 bool을 따로 제외합니다."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def validate_record(record: object) -> None:
+    """history 항목 하나를 검사합니다. 잘못되었으면 ValueError를 발생시킵니다."""
+    if not isinstance(record, dict):
+        raise ValueError("기록 항목이 객체가 아닙니다.")
+    for key, expected_type in HISTORY_FIELDS.items():
+        value: object = record.get(key)
+        valid: bool = is_plain_int(value) if expected_type is int else isinstance(value, expected_type)
+        if not valid:
+            raise ValueError(f"기록 항목의 {key} 값이 잘못되었습니다.")
+    if not 0 <= record["score"] <= 100:
+        raise ValueError("기록 항목의 점수 값이 잘못되었습니다.")
+
+
 def validate_state(data: object) -> State:
     """JSON에서 읽은 값을 검사하고 (퀴즈 목록, 최고 점수, 기록 목록)으로 변환합니다.
     state.json과 default_quizzes.json이 같은 구조이므로 두 파일 모두 이 함수로 검증합니다.
@@ -31,15 +60,12 @@ def validate_state(data: object) -> State:
     history: list[dict] = data["history"]
 
     # 최고 점수는 None(미풀이) 또는 0~100 사이의 정수여야 합니다.
-    # bool은 int의 하위 클래스이므로 isinstance(True, int)가 True가 됩니다. 이를 막기 위해 bool을 따로 제외합니다.
-    if best_score is not None and (
-        isinstance(best_score, bool)
-        or not isinstance(best_score, int)
-        or not 0 <= best_score <= 100
-    ):
+    if best_score is not None and (not is_plain_int(best_score) or not 0 <= best_score <= 100):
         raise ValueError("최고 점수 값이 잘못되었습니다.")
     if not isinstance(history, list):
         raise ValueError("기록의 형식이 잘못되었습니다.")
+    for record in history:
+        validate_record(record)
 
     return quizzes, best_score, history
 
