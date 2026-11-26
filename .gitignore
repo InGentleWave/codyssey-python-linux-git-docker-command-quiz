@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ===== Project-specific =====
+# 평가용 가이드 문서 (저장소에 올리지 않음)
+.guide/
