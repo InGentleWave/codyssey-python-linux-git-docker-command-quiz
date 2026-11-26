@@ -3,7 +3,7 @@
 # 퀴즈 객체와 선택지 개수를 가져옵니다.
 from quiz import CHOICE_COUNT, Quiz
 # 숫자 입력과 텍스트 입력을 검증하는 함수를 가져옵니다.
-from input_utils import ask_int, ask_text
+from input_utils import ask_int, ask_optional_text, ask_text
 # 한 판의 출제와 채점을 담당하는 클래스를 가져옵니다.
 from quiz_session import QuizSession
 # state.json 저장과 불러오기 함수를 가져옵니다.
@@ -20,10 +20,12 @@ MENU_ITEMS: list[str] = [
 # 마지막 항목(종료)의 번호입니다. 항목 개수가 바뀌어도 자동으로 맞춰집니다.
 EXIT_NUMBER: int = len(MENU_ITEMS)
 
-# 퀴즈 풀기 모드 목록입니다. 각 항목은 (화면에 보일 이름, 문제 순서를 섞을지 여부)입니다.
-PLAY_MODES: list[tuple[str, bool]] = [
-    ("기본 (저장된 순서대로 출제)", False),
-    ("랜덤 (순서를 섞어 출제)", True),
+# 퀴즈 풀기 모드 목록입니다. 각 항목은 (화면에 보일 이름, 문제 순서를 섞을지 여부, 힌트 사용 여부)입니다.
+PLAY_MODES: list[tuple[str, bool, bool]] = [
+    ("기본 (저장된 순서대로 출제)", False, False),
+    ("랜덤 (순서를 섞어 출제)", True, False),
+    ("기본 + 힌트", False, True),
+    ("랜덤 + 힌트", True, True),
 ]
 
 
@@ -52,10 +54,10 @@ class QuizGame:
         for number, label in enumerate(MENU_ITEMS, start=1):
             print(f"{number}. {label}")
 
-    def choose_mode(self) -> tuple[str, bool]:
+    def choose_mode(self) -> tuple[str, bool, bool]:
         """퀴즈 풀기 모드 목록을 출력하고, 선택한 모드를 반환합니다."""
-        print("\n풀이 모드를 선택하세요.")
-        for number, (label, _) in enumerate(PLAY_MODES, start=1):
+        print("\n풀이 모드를 선택하세요. (힌트 모드: 힌트를 본 문제는 맞혀도 0.5점)")
+        for number, (label, _, _) in enumerate(PLAY_MODES, start=1):
             print(f"{number}. {label}")
         choice: int = ask_int("모드 번호를 입력하세요: ", 1, len(PLAY_MODES))
         # 화면 번호는 1부터, 리스트 인덱스는 0부터이므로 1을 뺍니다.
@@ -70,13 +72,13 @@ class QuizGame:
             print("등록된 퀴즈가 없습니다. 퀴즈를 먼저 추가해 주세요.")
             return
 
-        mode_label, shuffle = self.choose_mode()
+        mode_label, shuffle, use_hint = self.choose_mode()
         # 0개나 전체 퀴즈 수를 넘는 값은 ask_int가 안내 후 다시 입력받습니다.
         count: int = ask_int(f"풀 문제 수를 입력하세요 (1~{total}): ", 1, total)
         print(f"\n[{mode_label}] {count}문제를 시작합니다.")
 
         # 출제와 채점은 QuizSession이 담당합니다.
-        score: int = QuizSession(self.quizzes, count, shuffle).run()
+        score: int = QuizSession(self.quizzes, count, shuffle, use_hint).run()
 
         # 아직 풀지 않았거나(None) 기존 최고 점수보다 높으면 갱신합니다 (설계 6절 4번 1항).
         if self.best_score is None or score > self.best_score:
@@ -97,7 +99,10 @@ class QuizGame:
         # 정답 번호는 1 ~ CHOICE_COUNT 범위의 정수만 받습니다.
         answer: int = ask_int(f"정답 번호를 입력하세요 (1~{CHOICE_COUNT}): ", 1, CHOICE_COUNT)
 
-        self.quizzes.append(Quiz(question, choices, answer))
+        # 힌트는 선택 항목입니다. 그냥 Enter를 누르면 None(힌트 없음)이 됩니다.
+        hint: str | None = ask_optional_text("힌트를 입력하세요 (없으면 Enter): ")
+
+        self.quizzes.append(Quiz(question, choices, answer, hint))
         print("퀴즈가 추가되었습니다.")
 
         # 퀴즈를 추가할 때마다 바로 저장합니다 (설계 6절 4번 2항).
@@ -117,6 +122,8 @@ class QuizGame:
             print(f"\n[{index}/{total}]")
             quiz.display()
             print(f"정답: {quiz.answer}번")
+            if quiz.has_hint():
+                print(f"힌트: {quiz.hint}")
 
     def show_best_score(self) -> None:
         """최고 점수를 출력합니다. 아직 풀지 않았으면 안내 문구를 출력합니다 (설계 6절 4번 4항)."""
