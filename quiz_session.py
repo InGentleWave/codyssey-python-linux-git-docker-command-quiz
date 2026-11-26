@@ -1,6 +1,7 @@
 """퀴즈 한 판의 출제와 채점을 담당하는 QuizSession 클래스."""
 
 import random
+from datetime import datetime
 
 from input_utils import ask_int
 from quiz import CHOICE_COUNT, Quiz
@@ -73,8 +74,19 @@ class QuizSession:
         """점수 = 획득 점수 / 푼 문제 수 x 100을 반올림한 정수입니다."""
         return round(self.points / len(self.quizzes) * 100)
 
-    def run(self) -> int:
-        """모든 문제를 출제하고 결과를 출력한 뒤 점수를 반환합니다."""
+    def make_record(self, score: int) -> dict:
+        """state.json의 history에 저장할 이번 게임 기록을 만듭니다."""
+        return {
+            # 게임을 마친 시각을 "YYYY-MM-DD HH:MM:SS" 형식의 문자열로 저장합니다.
+            "played_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "questions_solved": len(self.quizzes),
+            "correct_count": self.correct_count,
+            "score": score,
+            "hints_used": self.hints_used,
+        }
+
+    def run(self) -> dict:
+        """모든 문제를 출제하고 결과를 출력한 뒤, 이번 게임 기록(dict)을 반환합니다."""
         # enumerate의 start=1로 문제 번호를 1부터 표시합니다.
         for index, quiz in enumerate(self.quizzes, start=1):
             self.ask_question(index, quiz)
@@ -84,4 +96,4 @@ class QuizSession:
         if self.use_hint:
             result += f", 사용한 힌트 {self.hints_used}개"
         print(result)
-        return score
+        return self.make_record(score)
