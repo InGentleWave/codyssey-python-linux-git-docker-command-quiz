@@ -222,3 +222,6 @@ __marimo__/
 # ===== Project-specific =====
 # 평가용 가이드 문서 (저장소에 올리지 않음)
 .guide/
+# 실행 중 자동으로 만들어지는 백업과 손상 파일 보관본
+state.json.bak
+state.json.broken

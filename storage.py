@@ -1,6 +1,7 @@
-"""state.json 파일의 저장과 불러오기, 데이터 검증을 담당합니다."""
+"""state.json 파일의 저장과 불러오기, 데이터 검증, 백업을 담당합니다."""
 
 import json
+import shutil
 from pathlib import Path
 
 from default_quizzes import get_builtin_quizzes, read_default_data
@@ -8,6 +9,10 @@ from quiz import Quiz
 
 # 데이터 파일 경로입니다. __file__은 이 파일의 경로이고, parent는 그 파일이 있는 폴더(프로젝트 루트)입니다.
 STATE_PATH: Path = Path(__file__).resolve().parent / "state.json"
+# 저장 직전의 state.json을 복사해 두는 백업 파일입니다. state.json이 손상되면 이 파일로 복구합니다.
+BACKUP_PATH: Path = STATE_PATH.with_name("state.json.bak")
+# 손상된 state.json을 덮어쓰기 전에 옮겨 두는 파일입니다. 사용자가 직접 내용을 확인할 수 있습니다.
+BROKEN_PATH: Path = STATE_PATH.with_name("state.json.broken")
 
 # 불러온 상태의 형태: (퀴즈 목록, 최고 점수, 게임 기록 목록)
 State = tuple[list[Quiz], int | None, list[dict]]
@@ -81,25 +86,65 @@ def load_default_state() -> State:
         return get_builtin_quizzes(), None, []
 
 
+def read_state_file(path: Path) -> State:
+    """state.json 형식의 파일을 읽고 검증해 반환합니다. 실패하면 LOAD_ERRORS 중 하나가 발생합니다."""
+    with path.open("r", encoding="utf-8") as file:
+        # JSON 텍스트를 dict로 변환합니다. 형식이 잘못되면 JSONDecodeError가 발생합니다.
+        data: object = json.load(file)
+    return validate_state(data)
+
+
+def keep_broken_file() -> None:
+    """손상된 state.json을 state.json.broken으로 옮겨, 다음 저장 때 덮어써 사라지지 않게 합니다."""
+    try:
+        # replace는 같은 이름의 파일이 있으면 덮어씁니다(가장 최근 손상본만 보관).
+        STATE_PATH.replace(BROKEN_PATH)
+        print(f"손상된 파일은 {BROKEN_PATH.name}으로 옮겨 두었습니다.")
+    except OSError as error:
+        print(f"손상된 파일을 옮기지 못했습니다: {error}")
+
+
 def load_state() -> State:
-    """state.json에서 (퀴즈 목록, 최고 점수, 기록 목록)을 읽어 반환합니다.
-    파일이 없거나 손상되었으면 안내 후 기본 데이터를 반환합니다."""
+    """(퀴즈 목록, 최고 점수, 기록 목록)을 불러옵니다.
+    읽는 순서: state.json → state.json.bak → default_quizzes.json → 코드 내장 퀴즈"""
     # 파일이 없으면 첫 실행으로 보고 기본 데이터를 사용합니다.
     if not STATE_PATH.exists():
         print("저장된 데이터가 없어 기본 퀴즈로 시작합니다.")
         return load_default_state()
 
     try:
-        with STATE_PATH.open("r", encoding="utf-8") as file:
-            # JSON 텍스트를 dict로 변환합니다. 형식이 잘못되면 JSONDecodeError가 발생합니다.
-            data: object = json.load(file)
-        state: State = validate_state(data)
+        state: State = read_state_file(STATE_PATH)
     except LOAD_ERRORS:
-        print("state.json 파일을 읽을 수 없어 기본 퀴즈로 시작합니다.")
-        return load_default_state()
+        print("state.json 파일을 읽을 수 없습니다.")
+        keep_broken_file()
+    else:
+        print("저장된 데이터를 불러왔습니다.")
+        return state
 
-    print("저장된 데이터를 불러왔습니다.")
-    return state
+    # state.json이 손상되었으면 마지막 백업으로 복구를 시도합니다.
+    if BACKUP_PATH.exists():
+        try:
+            state = read_state_file(BACKUP_PATH)
+        except LOAD_ERRORS:
+            print(f"{BACKUP_PATH.name}도 읽을 수 없습니다.")
+        else:
+            print(f"{BACKUP_PATH.name}(마지막 저장 직전의 백업)에서 데이터를 복구했습니다.")
+            return state
+
+    print("기본 퀴즈로 시작합니다.")
+    return load_default_state()
+
+
+def backup_state() -> None:
+    """저장하기 직전에 기존 state.json을 state.json.bak으로 복사합니다."""
+    if not STATE_PATH.exists():
+        return
+    try:
+        # copy2는 내용과 함께 수정 시각 같은 파일 정보도 복사합니다.
+        shutil.copy2(STATE_PATH, BACKUP_PATH)
+    except OSError as error:
+        # 백업에 실패해도 저장은 계속 진행합니다.
+        print(f"백업 파일을 만들지 못했습니다: {error}")
 
 
 def save_state(quizzes: list[Quiz], best_score: int | None, history: list[dict]) -> None:
@@ -110,6 +155,9 @@ def save_state(quizzes: list[Quiz], best_score: int | None, history: list[dict])
         "best_score": best_score,
         "history": history,
     }
+
+    # "w" 모드로 여는 순간 기존 내용이 지워지므로, 먼저 백업합니다.
+    backup_state()
 
     try:
         with STATE_PATH.open("w", encoding="utf-8") as file:
